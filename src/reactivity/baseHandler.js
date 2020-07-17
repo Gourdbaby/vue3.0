@@ -1,9 +1,12 @@
 
 import { isObject, hasOwn, hasChanged } from '../shared/utils'
 import { reactive } from './reactive'
+import { track, trigger } from './effect'
 
 function get (target, key, receiver){
   const res = Reflect.get(target, key, receiver) // feel as target[key] as
+
+  track(target, 'GET', key); // 依赖收集
 
   if(isObject(res)){
     return reactive(res) // If Object return proxy; recursion;
