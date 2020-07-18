@@ -59,3 +59,29 @@ state.name = 'Gourdbaby is progressing'
 
 >> 代码接着走, 执行`state.name = 'Gourdbaby is progressing'`触发了`set`函数，我们在`set`函数中执行了`trigger`方法，来触发依赖更新，也就是执行`name`属性所依赖的`effect`。执行`trigger`的时候，先获取维护的`WeakMap`中是否有当前操作对象，如果有才继续往下操作，这里的操作相对简单，也就是拿到当前操作的`key`也就是`name`，然后获取`name`所依赖的`effect`执行该方法，这时`effect`又会去执行你传去的函数。此时页面打印出`Gourdbaby is progressing`。   
 >> 到此，整个vue 3.0 `reactive`，`effect`执行逻辑的代码讲解完毕，稍后会增加`computed方法`
+---
+> 下面来说一下`computed`方法的实现和执行逻辑，这个方法还是有很多逻辑关系在里，一定要debugger跟才行，要不很难想明白。
+>> 先来说一下computed的基本用法和规则，首先computed是一个函数，可以接收一个函数或者一个对象，如果传入一个对象的话，对象上要有两个属性`get` `set`   
+computed里传入的函数当它依赖的值发生改变了，他才会执行（也就是，你在该函数中用到的Proxy对象下的属性），并且computed默认不会执行，只有当你取值或者赋值的时候才会执行（这里的实现方式是vue2的 `Object.definePropotype`）   
+还有就是，computed是有缓存机制的，当你多次取值的时候不会每次都执行computed函数，只有第一次才执行（这里的实现方式就是靠一个变量判断实现`dirty`）
+>> 下面说一下当你修改了computed中依赖的属性后，整个computed的执行逻辑   
+```
+import { reactive, effect, computed } from './reactivity'
+
+// 把数据进行proxy代理
+const data = { name: 'Gourdbaby', arr: [1,2,3] }
+const state = reactive(data)  // return Proxy {name: "Gourdbaby", arr: Array(3)}
+
+const myName = computed(() => {
+  console.log('ok') 
+  return state.name + 'minxiang.sun'
+})
+
+effect(function(){
+  console.log(myName.value)
+})
+
+state.name = 'Gourdbaby is progressing'
+```
+>>> 代码执行到`computed`的时候，myName 返回了一个响应式对象，上文中有提到，veu2的`definePropotype`，然后代码执行effect，立即执行传进来的函数，代码执行到`console.log(myName.value)`
+取值操作，执行到了响应式对象的`get`方法， `get`方法中首先判断`dirty`是否为true，证明是否是第一次执行，也就是缓存机制的实现，如果执行了，就把`dirty`变为`false`，以后再取值就不会再执行该函数了，会直接把上次存起来的value返回出去。只有在你修改值以后才会再重新执行。接着代码执行`runner`函数，`runner`函数式一个`effect`这个`effect`标记了当前是一个computed，`runner`函数执行时就会执行一开始传给`computed`的函数，`computed`函数执行了`return state.name + 'minxiang.sun'`发现依赖属性`state.name`，此时触发了`proxy`的`get`函数，`get`函数进行依赖收集，执行到了`track`函数，把`name`是
