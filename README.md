@@ -84,4 +84,10 @@ effect(function(){
 state.name = 'Gourdbaby is progressing'
 ```
 >>> 代码执行到`computed`的时候，myName 返回了一个响应式对象，上文中有提到，veu2的`definePropotype`，然后代码执行effect，立即执行传进来的函数，代码执行到`console.log(myName.value)`
-取值操作，执行到了响应式对象的`get`方法， `get`方法中首先判断`dirty`是否为true，证明是否是第一次执行，也就是缓存机制的实现，如果执行了，就把`dirty`变为`false`，以后再取值就不会再执行该函数了，会直接把上次存起来的value返回出去。只有在你修改值以后才会再重新执行。接着代码执行`runner`函数，`runner`函数式一个`effect`这个`effect`标记了当前是一个computed，`runner`函数执行时就会执行一开始传给`computed`的函数，`computed`函数执行了`return state.name + 'minxiang.sun'`发现依赖属性`state.name`，此时触发了`proxy`的`get`函数，`get`函数进行依赖收集，执行到了`track`函数，把`name`是
+取值操作，执行到了响应式对象的`get`方法， `get`方法中首先判断`dirty`是否为true，证明是否是第一次执行，也就是缓存机制的实现，如果执行了，就把`dirty`变为`false`，以后再取值就不会再执行该函数了，会直接把上次存起来的value返回出去。只有在你修改值以后才会再重新执行。接着代码执行`runner`函数，`runner`函数式一个`effect`这个`effect`标记了当前是一个computed，`runner`函数执行时就会执行一开始传给`computed`的函数，`computed`函数执行了`return state.name + 'minxiang.sun'`发现依赖属性`state.name`，此时触发了`proxy`的`get`函数，`get`函数进行依赖收集，执行到了`track`函数，把`name`属性依赖的`computed` `effect`收集起来，接着返回`state.name + 'minxiang.sun'`的执行结果。接着把`dirty`设置为`false`，进行缓存，然后再进行`track`依赖收集，这时候的依赖收集是收集的是`console.log(myName.value)`这个函数的effect，为的是当我们修改了`computed`依赖的属性时能够执行到`effect`**（这里有点乱，文字属实不好描述，如需帮助可以联系本人）**   
+ 当执行`state.name = 'Gourdbaby is progressing'`这句话的时候会触发`proxy`的`set`方法，`set` 中会触发`trigger`，找到name依赖的`computed effect`然后重点：我们在`trigger`中处理`computed effect`的时候如果发现是`computed effect`执行的其实是`computed effect`对象下的`scheduler`在`scheduler`中会把dirty变为`true`因为修改值会重新触发`computed`,然后再触发`trigger`函数 执行普通的`effect`打印出修改后的值。
+ ---
+ 到此，vue3.0的 `reactive effect computed`都解释完成，最核心的就是`effect`方法，这里的逻辑关系非常紧密，一环扣一环，读者需要跟着代码debugger多走几遍，方可探寻其中奥秘，本次文字解说原因有二
+ 1. 方便自己以后复习，给自己思路引导
+ 2. 帮助读者快速理解其原理
+所谓万丈高楼平地起，我们仍须努力，打好基础，向着未来迸发！！！
