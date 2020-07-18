@@ -87,6 +87,7 @@ function trigger (target, type, key, value){
         effect() // 执行取到effect
     }
   }
+
   computedEffect.forEach(run)
   effects.forEach(run)
 
