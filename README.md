@@ -5,7 +5,7 @@ Learn vue 3.0
   2. npm run serve
   3. http://localhost:8080
 ### Realization vue3.0 reactive
-index.js文件中引入 `reactive` 其接受一个要对象，返回一个Proxy对象。
+index.js文件中引入 `reactive` 其接受一个对象，返回一个Proxy对象。
 ```
 import { reactive } from './reactivity'
 
@@ -53,9 +53,7 @@ effect(function(){
 state.name = 'Gourdbaby is progressing'
 ```
 >> `state`是一个`proxy`，然后代码执行`effect`函数，在`effect`中会立即执行传给`effect`的函数，然后我们在这个函数中执行了`state.name`，这时候会触发`proxy`的`get`, 我们在`get`函数中执行了`track`方法进行依赖收集，`track`方法维护一个`WeakMap`对象，这个`WeakMap`对象保存着`{ name: 'Gourdbaby', arr: [1,2,3] }`对象里面所有属性所依赖的`effect`，当在触发`trigger`的时候会用到。   
-代码
->> `state`是一个`proxy`，然后代码执行`effect`函数，在`effect`中会立即执行传给`effect`的函数，然后我们在这个函数中执行了`state.name`，这时候会触发`proxy`的`get`, 我们在`get`函数中执行了`track`方法进行依赖收集，`track`方法维护一个`WeakMap`对象，这个`WeakMap`对象保存着`{ name: 'Gourdbaby', arr: [1,2,3] }`对象里面所有属性所依赖的`effect`，当在触发`trigger`的时候会用到。   接着
->> `state`是一个`proxy`，然后代码执行`effect`函数，在`effect`中会立即执行传给`effect`的函数，然后我们在这个函数中执行了`state.name`，这时候会触发`proxy`的`get`, 我们在`get`函数中执行了`track`方法进行依赖收集，`track`方法维护一个`WeakMap`对象，这个`WeakMap`对象保存着`{ name: 'Gourdbaby', arr: [1,2,3] }`对象里面所有属性所依赖的`effect`，当在触发`trigger`的时候会用到。到此，effect的所有逻辑执行完毕，控制台会打印出`Gourdbaby`   
+effect的所有逻辑执行完毕，控制台会打印出`Gourdbaby`   
 
 >> 代码接着走, 执行`state.name = 'Gourdbaby is progressing'`触发了`set`函数，我们在`set`函数中执行了`trigger`方法，来触发依赖更新，也就是执行`name`属性所依赖的`effect`。执行`trigger`的时候，先获取维护的`WeakMap`中是否有当前操作对象，如果有才继续往下操作，这里的操作相对简单，也就是拿到当前操作的`key`也就是`name`，然后获取`name`所依赖的`effect`执行该方法，这时`effect`又会去执行你传去的函数。此时页面打印出`Gourdbaby is progressing`。   
 >> 到此，整个vue 3.0 `reactive`，`effect`执行逻辑的代码讲解完毕，稍后会增加`computed方法`
